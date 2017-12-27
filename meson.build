@@ -1,6 +1,6 @@
 project ('jetpl', 'c',
   version : '0.1.0',
-  license : 'Mit'
+  license : 'MIT'
 )
 
 incdir = include_directories('include')
