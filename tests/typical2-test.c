@@ -9,16 +9,16 @@ int main () {
     JeTplString output;
     JeTplString view;
 
-    jetpl_str_init_sz(&expected, "Hello {{nam}}\n"
+    jetpl_str_init_sz(&expected, "Hello &lt;Chris&gt;\n"
                                  "You have just won 10000 dollars!\n"
                                  "Well, 6000 dollars, after taxes.\n");
 
-    jetpl_str_init_sz(&view, "Hello {{nam}}\n"
+    jetpl_str_init_sz(&view, "Hello {{name}}\n"
                              "You have just won {{value}} dollars!\n"
                              "{{#in_ca}}Well, {{taxed_value}} dollars, after taxes.\n{{/in_ca}}");
 
 	JeTpl *tpl = jetpl_new(&view);
-    JeTplObject *obj =  (JeTplObject *) typical_new("Chris", 10000, true);
+    JeTplObject *obj =  (JeTplObject *) typical_new("<Chris>", 10000, true);
 	
 	
 	jetpl_render(tpl, obj, &output);

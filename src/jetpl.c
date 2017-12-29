@@ -64,7 +64,6 @@ html_encode(JeTplString *str) {
 	char * it;
     *newstr = 0;
 	
-    char csz [] = {0, 0};
 	for (it = str->data; *it; ++it) {
         if (len >= capacity) {
 			capacity *= 2;
@@ -93,8 +92,9 @@ html_encode(JeTplString *str) {
 				len += 5;
 				break;
 			default:
-				csz[0] = *it;
-                strcat(newstr + len, csz);
+				(newstr + len)[0] = *it;
+				(newstr + len)[1] = 0;
+
 				len += 1;
 		}
 	}
@@ -114,6 +114,7 @@ void jetpl_render(JeTpl * self, JeTplObject * obj, JeTplString *output) {
     
     size_t index;
     JeTplToken *begin = 0;
+    
     for (index = 0; index < self->toks_len; ++index) {
     	JeTplToken *tok = tokit + index;
     	
@@ -121,34 +122,41 @@ void jetpl_render(JeTpl * self, JeTplObject * obj, JeTplString *output) {
             jetpl_str_strip(&tok->varname);
 
     	if  ((tok->type & JETPL_TOK_VAR) == JETPL_TOK_VAR) {
-    		JeTplString rendered = {0};
+    	    JeTplString rendered = {0};
 
 			const JeTplObjectProp *prop = jetpl_obj_find_property(obj, tok->varname.data);
-
+			
 			if (prop) {
 				jetpl_obj_render_property(obj, prop, NULL, 0, &rendered);
 
-            	if (tok->type != JETPL_TOK_UNESC) html_encode(&rendered);
+				if (tok->type != JETPL_TOK_UNESC) html_encode(&rendered);
 
-            	replace_token(output, tokit, self->toks_len, tok, &rendered);
-            	jetpl_str_free(&rendered);
-            }
+				replace_token(output, tokit, self->toks_len, tok, &rendered);
+				jetpl_str_free(&rendered);
+			} else {
+				// TODO: Error Handling
+			}
+            
     		
         } else if (tok->type == JETPL_TOK_BEGIN) {
     		begin = tok;
         } else if (tok->type == JETPL_TOK_END && begin) {
-    		JeTplString rendered = {0};
+            JeTplString rendered = {0};
+
             char * arg = malloc(tok->begin - begin->end + 1);
     		*arg = 0;
             strncat(arg, output->data + begin->end, tok->begin - begin->end);
-            
+
             const JeTplObjectProp *prop = jetpl_obj_find_property(obj, tok->varname.data);
+
             if (prop) {
-            	jetpl_obj_render_property(obj, prop, arg, tok->begin - begin->end, &rendered);
+                jetpl_obj_render_property(obj, prop, arg, tok->begin - begin->end, &rendered);
 
-            	replace_tokens(output, tokit,  self->toks_len, begin, tok, &rendered);
+				replace_tokens(output, tokit,  self->toks_len, begin, tok, &rendered);
 
-            	jetpl_str_free(&rendered);
+				jetpl_str_free(&rendered);
+            } else {
+            	// TODO: Error Handling
             }
 
             free(arg);
