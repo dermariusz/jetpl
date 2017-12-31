@@ -15,6 +15,8 @@ void jetpl_str_init(JeTplString * self, const char *data, size_t len);
 
 void jetpl_str_init_sz(JeTplString *self, const char *sz_data);
 
+void jetpl_str_init_f (JeTplString *, const char *format, ...);
+
 void jetpl_str_copy(JeTplString * destination, JeTplString * source);
 
 int jetpl_str_cmp(JeTplString * str1, JeTplString * str2); 

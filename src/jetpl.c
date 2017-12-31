@@ -7,6 +7,8 @@ struct _JeTpl {
 	size_t toks_len;
 };
 
+JETPL_RPNFD *jetpl_render_property_not_found_delegate = 0;
+
 JeTpl *jetpl_new(JeTplString * view) {
 
 	JeTpl * self = malloc(sizeof(JeTpl));
@@ -72,29 +74,32 @@ html_encode(JeTplString *str) {
 		
 		switch (*it) {
 			case '&':
+				*(newstr + len) = 0;
                 strcat(newstr + len, "&amp;");
 				len += 5;
 				break;
 			case '<':
+				*(newstr + len) = 0;
                 strcat(newstr + len, "&lt;");
 				len += 4;
 				break;
 			case '>':
+				*(newstr + len) = 0;
                 strcat(newstr + len, "&gt;");
 				len += 4;
 				break;
 			case '\"':
+				*(newstr + len) = 0;
                 strcat(newstr + len, "&quot;");
 				len += 6;
 				break;
 			case '\'':
+				*(newstr + len) = 0;
                 strcat(newstr + len, "&#x2F");
 				len += 5;
 				break;
 			default:
-				(newstr + len)[0] = *it;
-				(newstr + len)[1] = 0;
-
+				*(newstr + len) = *it;
 				len += 1;
 		}
 	}
@@ -133,10 +138,12 @@ void jetpl_render(JeTpl * self, JeTplObject * obj, JeTplString *output) {
 
 				replace_token(output, tokit, self->toks_len, tok, &rendered);
 				jetpl_str_free(&rendered);
-			} else {
-				// TODO: Error Handling
+
+			} else if (jetpl_render_property_not_found_delegate) {
+            	jetpl_render_property_not_found_delegate(tok->varname.data, &rendered);
+ 				replace_token(output, tokit, self->toks_len, tok, &rendered);
+				jetpl_str_free(&rendered);
 			}
-            
     		
         } else if (tok->type == JETPL_TOK_BEGIN) {
     		begin = tok;
@@ -152,11 +159,13 @@ void jetpl_render(JeTpl * self, JeTplObject * obj, JeTplString *output) {
             if (prop) {
                 jetpl_obj_render_property(obj, prop, arg, tok->begin - begin->end, &rendered);
 
-				replace_tokens(output, tokit,  self->toks_len, begin, tok, &rendered);
+				replace_tokens(output, tokit, self->toks_len, begin, tok, &rendered);
 
 				jetpl_str_free(&rendered);
-            } else {
-            	// TODO: Error Handling
+            } else if (jetpl_render_property_not_found_delegate) {
+            	jetpl_render_property_not_found_delegate(tok->varname.data, &rendered);
+				replace_tokens(output, tokit, self->toks_len, begin, tok, &rendered);
+				jetpl_str_free(&rendered);
             }
 
             free(arg);

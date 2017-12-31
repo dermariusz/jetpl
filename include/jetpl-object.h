@@ -8,13 +8,15 @@
 
 typedef struct _JeTplObject JeTplObject;
 
+typedef void (JETPL_RPD)(JeTplObject *, int, char *, size_t, JeTplString *);
+
 typedef struct _JeTplObjectProp {
 	unsigned int id;
 	const char *name;
 } JeTplObjectProp;
 
 typedef struct _JeTplObjectClass {
-    void (*render_property_delegate)(JeTplObject *, int, char *, size_t, JeTplString *);
+    JETPL_RPD *render_property_delegate;
     const JeTplObjectProp * properties;
     size_t prop_num;
 } JeTplObjectClass;

@@ -3,6 +3,7 @@
 #include <assert.h>
 #include <string.h>
 #include <stdio.h>
+#include <stdarg.h>
 
 void jetpl_str_init (JeTplString * self, const char * data, size_t len) {
 	assert(self);
@@ -10,11 +11,11 @@ void jetpl_str_init (JeTplString * self, const char * data, size_t len) {
     if (data && len) {
 		self->len = len;
         self->data = malloc(len + 1);
+		self->capacity = len + 1;
 		self->data[0] = 0;
 		strncat(self->data, data, len);
-		self->capacity = self->len;
 	} else {
-		self->len = len;
+		self->len = 0;
 		self->capacity = (len == 0) ? 32: len;
 		self->data = malloc(self->capacity);
 	}
@@ -22,6 +23,23 @@ void jetpl_str_init (JeTplString * self, const char * data, size_t len) {
 
 void jetpl_str_init_sz (JeTplString * self, const char *sz_data) {
 	jetpl_str_init(self, sz_data, strlen(sz_data));
+}
+
+void jetpl_str_init_f (JeTplString *self, const char *format, ...) {
+	va_list arglist;
+	va_start(arglist, format);
+	int needed = vsnprintf(NULL, 0, format, arglist);
+	va_end(arglist);
+	if (needed > 0) {
+		self->len = needed;
+		self->data = malloc(needed + 1);
+
+		va_start(arglist, format);
+		vsnprintf(self->data, needed + 1, format, arglist);
+		va_end(arglist);
+		
+		self->capacity = needed + 1;
+	}
 }
 
 void jetpl_str_copy (JeTplString * dest, JeTplString * src) {

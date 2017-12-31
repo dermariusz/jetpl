@@ -10,7 +10,7 @@ int main() {
 	JeTplString str;
 	JeTplString expected;
 
-	jetpl_str_init_sz(&str, " Hello ");
+	jetpl_str_init_f(&str, "%s", " Hello ");
 	jetpl_str_init_sz(&expected, "Hello");
 
 	jetpl_str_strip(&str);

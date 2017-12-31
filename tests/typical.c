@@ -27,16 +27,14 @@ const JeTplObjectProp properties[] = {
 
 static void typical_render_property_delegate(JeTplObject *obj, int prop_id, char *arg, size_t arglen, JeTplString *out) {
 	Typical * self = (Typical *) obj;
+
 	switch (prop_id) {
 		case TYPICAL_NAME:
 			jetpl_str_init_sz (out, self->name);
 			break;
 
 		case TYPICAL_VALUE:
-            out->data = malloc(64);
-            out->capacity = 64;
-            snprintf(out->data, 63, "%ld", self->value);
-			out->len = strlen(out->data);
+			jetpl_str_init_f(out, "%ld", self->value);
 			break;
 
         case TYPICAL_IN_CA:
@@ -49,10 +47,7 @@ static void typical_render_property_delegate(JeTplObject *obj, int prop_id, char
 			break;
 
 		case TYPICAL_TAXED_VALUE:
-            out->data = malloc(64);
-            out->capacity = 64;
-            snprintf(out->data, 63, "%.0f", self->value*0.6);
-			out->len = strlen(out->data);
+			jetpl_str_init_f(out, "%.0f", self->value*0.6);
 			break;
 	}
 }

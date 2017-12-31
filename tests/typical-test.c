@@ -3,17 +3,24 @@
 
 #include "typical.h"
 
+static void render_property_not_found(const char *prop_name, JeTplString *out) {
+	jetpl_str_init_sz(out, "Hahaha"); 
+}
+
+JETPL_RPNFD *jetpl_render_property_not_found_delegate = render_property_not_found;
+
 int main () {
+
     int ret = 0;
     JeTplString expected;
     JeTplString output;
     JeTplString view;
 
-    jetpl_str_init_sz(&expected, "Hello Chris\n"
+    jetpl_str_init_sz(&expected, "Hello Hahaha\n"
                                  "You have just won 10000 dollars!\n"
                                  "Well, 6000 dollars, after taxes.\n");
 
-    jetpl_str_init_sz(&view, "Hello {{ name }}\n"
+    jetpl_str_init_sz(&view, "Hello {{ namex }}\n"
                              "You have just won {{value}} dollars!\n"
                              "{{#in_ca}}Well, {{taxed_value}} dollars, after taxes.\n{{/in_ca}}");
 
