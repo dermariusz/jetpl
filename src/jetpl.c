@@ -2,14 +2,15 @@
 #include "jetpl-lexer.h"
 
 struct _JeTpl {
-	JeTplString *view;
-	JeTplToken *toks;
+	JeTplString * view;
+	JeTplToken * toks;
 	size_t toks_len;
 };
 
-JETPL_RPNFD *jetpl_render_property_not_found_delegate = 0;
+JeTplSimpleDel * jetpl_render_partial_delegate = 0;
+JeTplSimpleDel * jetpl_render_property_not_found_delegate = 0;
 
-JeTpl *jetpl_new(JeTplString * view) {
+JeTpl * jetpl_new(JeTplString * view) {
 
 	JeTpl * self = malloc(sizeof(JeTpl));
 	self->view = view;
@@ -38,7 +39,7 @@ JeTpl *jetpl_new(JeTplString * view) {
 }
 
 static void
-replace_token(JeTplString *str, JeTplToken tokit[], size_t tokitlen, JeTplToken *token, JeTplString * repl) {
+replace_token(JeTplString * str, JeTplToken tokit[], size_t tokitlen, JeTplToken * token, JeTplString * repl) {
 	size_t length = token->end - token->begin;
 	jetpl_str_replace(str, token->begin, token->end, repl);
     long difflen = repl->len - length;
@@ -50,13 +51,13 @@ replace_token(JeTplString *str, JeTplToken tokit[], size_t tokitlen, JeTplToken 
 }
 
 static void
-replace_tokens(JeTplString *str, JeTplToken tokit[], size_t tokitlen, JeTplToken *tok1, JeTplToken *tok2, JeTplString * repl) {
+replace_tokens(JeTplString * str, JeTplToken tokit[], size_t tokitlen, JeTplToken * tok1, JeTplToken * tok2, JeTplString * repl) {
     JeTplToken newtok = {tok1->begin, tok2->end, JETPL_TOK_NONE, {0}};
     replace_token(str, tokit, tokitlen, &newtok, repl);
 }
 
 static void
-html_encode(JeTplString *str) {
+html_encode(JeTplString * str) {
 	if (str->len == 0) return;
 
 	size_t capacity = 2*str->len;
@@ -71,35 +72,34 @@ html_encode(JeTplString *str) {
 			capacity *= 2;
 			newstr = realloc(newstr, capacity);
 		}
-		
 		switch (*it) {
 			case '&':
-				*(newstr + len) = 0;
+				newstr[len] = 0;
                 strcat(newstr + len, "&amp;");
 				len += 5;
 				break;
 			case '<':
-				*(newstr + len) = 0;
+				newstr[len] = 0;
                 strcat(newstr + len, "&lt;");
 				len += 4;
 				break;
 			case '>':
-				*(newstr + len) = 0;
+				newstr[len] = 0;
                 strcat(newstr + len, "&gt;");
 				len += 4;
 				break;
 			case '\"':
-				*(newstr + len) = 0;
+				newstr[len] = 0;
                 strcat(newstr + len, "&quot;");
 				len += 6;
 				break;
 			case '\'':
-				*(newstr + len) = 0;
+				newstr[len] = 0;
                 strcat(newstr + len, "&#x2F");
 				len += 5;
 				break;
 			default:
-				*(newstr + len) = *it;
+				newstr[len] = *it;
 				len += 1;
 		}
 	}
@@ -109,19 +109,19 @@ html_encode(JeTplString *str) {
     str->len = len;
 }
 
-void jetpl_render(JeTpl * self, JeTplObject * obj, JeTplString *output) {
+void jetpl_render(JeTpl * self, JeTplObject * obj, JeTplString * output) {
     static JeTplString nullstr;
 
-	JeTplToken *tokit = malloc(self->toks_len*sizeof(JeTplToken));
+	JeTplToken * tokit = malloc(self->toks_len*sizeof(JeTplToken));
 	memcpy (tokit, self->toks, self->toks_len*sizeof(JeTplToken));
 
     jetpl_str_copy (output, self->view);
     
     size_t index;
-    JeTplToken *begin = 0;
+    JeTplToken * begin = 0;
     
     for (index = 0; index < self->toks_len; ++index) {
-    	JeTplToken *tok = tokit + index;
+    	JeTplToken * tok = tokit + index;
     	
         if (!jetpl_str_is_null(&tok->varname))
             jetpl_str_strip(&tok->varname);
@@ -129,7 +129,7 @@ void jetpl_render(JeTpl * self, JeTplObject * obj, JeTplString *output) {
     	if  ((tok->type & JETPL_TOK_VAR) == JETPL_TOK_VAR) {
     	    JeTplString rendered = {0};
 
-			const JeTplObjectProp *prop = jetpl_obj_find_property(obj, tok->varname.data);
+			const JeTplObjectProp * prop = jetpl_obj_find_property(obj, tok->varname.data);
 			
 			if (prop) {
 				jetpl_obj_render_property(obj, prop, NULL, 0, &rendered);
@@ -154,7 +154,7 @@ void jetpl_render(JeTpl * self, JeTplObject * obj, JeTplString *output) {
     		*arg = 0;
             strncat(arg, output->data + begin->end, tok->begin - begin->end);
 
-            const JeTplObjectProp *prop = jetpl_obj_find_property(obj, tok->varname.data);
+            const JeTplObjectProp * prop = jetpl_obj_find_property(obj, tok->varname.data);
 
             if (prop) {
                 jetpl_obj_render_property(obj, prop, arg, tok->begin - begin->end, &rendered);
@@ -172,6 +172,13 @@ void jetpl_render(JeTpl * self, JeTplObject * obj, JeTplString *output) {
 
     	} else if (tok->type == JETPL_TOK_COMMENT) {
             replace_token(output, tokit, self->toks_len, tok, &nullstr);
+    	} else if (tok->type == JETPL_TOK_PARTIAL && jetpl_render_partial_delegate) {
+    		JeTplString rendered = {0};
+
+    		jetpl_render_partial_delegate(tok->varname.data, &rendered);
+    		replace_token(output, tokit, self->toks_len, tok, &rendered);
+
+			jetpl_str_free(&rendered);
     	}
     }
 

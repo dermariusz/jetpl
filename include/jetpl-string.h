@@ -11,11 +11,11 @@ typedef struct _JeTplString {
     size_t capacity;
 } JeTplString;
 
-void jetpl_str_init(JeTplString * self, const char *data, size_t len);
+void jetpl_str_init(JeTplString * self, const char * data, size_t len);
 
-void jetpl_str_init_sz(JeTplString *self, const char *sz_data);
+void jetpl_str_init_sz(JeTplString * self, const char * sz_data);
 
-void jetpl_str_init_f (JeTplString *, const char *format, ...);
+void jetpl_str_init_f (JeTplString * self, const char * format, ...);
 
 void jetpl_str_copy(JeTplString * destination, JeTplString * source);
 

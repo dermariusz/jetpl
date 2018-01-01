@@ -6,13 +6,14 @@
 #include <stddef.h>
 
 enum JeTplTokenType {
-    JETPL_TOK_NONE,
+    JETPL_TOK_NONE = 0,
     JETPL_TOK_BEGIN,
     JETPL_TOK_END,
+    JETPL_TOK_TEXT,
     JETPL_TOK_VAR,
-    JETPL_TOK_UNESC = 7,
-    JETPL_TOK_TEXT = 8,
-    JETPL_TOK_COMMENT = 16
+    JETPL_TOK_UNESC = 1 << 3 | JETPL_TOK_VAR,
+    JETPL_TOK_COMMENT = 1 << 3,
+    JETPL_TOK_PARTIAL = 1 << 4
 };
 
 typedef struct _JeTplToken {

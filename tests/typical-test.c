@@ -7,9 +7,8 @@ static void render_property_not_found(const char *prop_name, JeTplString *out) {
 	jetpl_str_init_sz(out, "Hahaha"); 
 }
 
-JETPL_RPNFD *jetpl_render_property_not_found_delegate = render_property_not_found;
-
 int main () {
+    jetpl_render_property_not_found_delegate = render_property_not_found;
 
     int ret = 0;
     JeTplString expected;

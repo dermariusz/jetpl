@@ -21,11 +21,11 @@ void jetpl_str_init (JeTplString * self, const char * data, size_t len) {
 	}
 }
 
-void jetpl_str_init_sz (JeTplString * self, const char *sz_data) {
+void jetpl_str_init_sz (JeTplString * self, const char * sz_data) {
 	jetpl_str_init(self, sz_data, strlen(sz_data));
 }
 
-void jetpl_str_init_f (JeTplString *self, const char *format, ...) {
+void jetpl_str_init_f (JeTplString * self, const char * format, ...) {
 	va_list arglist;
 	va_start(arglist, format);
 	int needed = vsnprintf(NULL, 0, format, arglist);
