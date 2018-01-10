@@ -21,7 +21,7 @@ void jetpl_str_copy(JeTplString * destination, JeTplString * source);
 
 int jetpl_str_cmp(JeTplString * str1, JeTplString * str2); 
 
-#define jetpl_str_is_null(self) ((self) && (self)->len == 0)
+#define jetpl_str_is_null(self) ((self != NULL) && (self)->len == 0)
 
 void jetpl_str_strip(JeTplString * self);
 

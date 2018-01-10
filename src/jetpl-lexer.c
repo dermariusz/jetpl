@@ -53,16 +53,23 @@ void jetpl_lex_next(JeTplLexer *self, JeTplToken *tok) {
                     eot += 2;
                     break;
                 }
+                else if (strncmp("{{", self->view->data + eot, 2) == 0) {
+                	// There is no valid reason to allow opening braces inside varname.
+                	goto treat_current_token_as_text;
+                }
             }
+            if (jetpl_str_is_null(&varname))
+            	goto treat_current_token_as_text; // There is no way this could be a valid token.
 
 			if (type == JETPL_TOK_END) {
 				if (jetpl_str_cmp(&self->beg_var, &varname) != 0)
-					// The current token is wrongly detected as JETPL_TOK_END because the variable name
-					// of the JETPL_TOK_BEGIN token and the name of the curent token are different. It is
-					// needed to treat this token as text token in order to support to nested sections.
+					// The variable name of the JETPL_TOK_BEGIN token and the name of the current token
+					// are different, therefore this token shouldn't be handled as JETPL_TOK_END token. In
+					// order to support nested sections, it is needed to treat this token as a text token.
 					goto treat_current_token_as_text;
+				else
+					self->beg_var = nullstr; // Reset
 
-    			self->beg_var = nullstr; // Reset
 			} else if (type & JETPL_TOK_BEGIN) {
             	self->beg_var = varname; // Set
             }
