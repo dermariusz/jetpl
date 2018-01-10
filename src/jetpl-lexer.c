@@ -57,9 +57,9 @@ void jetpl_lex_next(JeTplLexer *self, JeTplToken *tok) {
 
 			if (type == JETPL_TOK_END) {
 				if (jetpl_str_cmp(&self->beg_var, &varname) != 0)
-					// This current token is wrongly detected as JETPL_TOK_END because the variable name
-					// of the JETPL_TOK_BEGIN token and the name of the curent token are different.
-					// This is needed in order to support to nested sections.
+					// The current token is wrongly detected as JETPL_TOK_END because the variable name
+					// of the JETPL_TOK_BEGIN token and the name of the curent token are different. It is
+					// needed to treat this token as text token in order to support to nested sections.
 					goto treat_current_token_as_text;
 
     			self->beg_var = nullstr; // Reset
