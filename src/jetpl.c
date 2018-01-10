@@ -7,10 +7,11 @@ struct _JeTpl {
 	size_t toks_len;
 };
 
-JeTplSimpleDel * jetpl_render_partial_delegate = 0;
+JeTplSimpleDel * jetpl_output_partial_delegate = 0;
 JeTplSimpleDel * jetpl_render_property_not_found_delegate = 0;
 
 JeTpl * jetpl_new(JeTplString * view) {
+    static const JeTplToken nulltok;
 
 	JeTpl * self = malloc(sizeof(JeTpl));
 	self->view = view;
@@ -29,31 +30,32 @@ JeTpl * jetpl_new(JeTplString * view) {
 
 		if (i == capacity) {
 			capacity *= 2;
-			self->toks = realloc(toks, capacity*sizeof(JeTplToken));
+            self->toks = realloc(self->toks, capacity*sizeof(JeTplToken));
 		}
 	}
+    toks[i] = nulltok;
 	self->toks = toks;
-	self->toks_len = i;
+    self->toks_len = i + 1;
 
 	return self;
 }
 
 static void
-replace_token(JeTplString * str, JeTplToken tokit[], size_t tokitlen, JeTplToken * token, JeTplString * repl) {
+replace_token(JeTplString * str, JeTplToken tokit[], JeTplToken * token, JeTplString * repl) {
 	size_t length = token->end - token->begin;
 	jetpl_str_replace(str, token->begin, token->end, repl);
     long difflen = repl->len - length;
 
 
     size_t i;
-    for (i = 0; i < tokitlen; ++i)
+    for (i = 0; tokit[i].type != JETPL_TOK_NONE; ++i)
         jetpl_token_update_position(tokit + i, token->begin, token->end, difflen);
 }
 
 static void
-replace_tokens(JeTplString * str, JeTplToken tokit[], size_t tokitlen, JeTplToken * tok1, JeTplToken * tok2, JeTplString * repl) {
+replace_tokens(JeTplString * str, JeTplToken tokit[], JeTplToken * tok1, JeTplToken * tok2, JeTplString * repl) {
     JeTplToken newtok = {tok1->begin, tok2->end, JETPL_TOK_NONE, {0}};
-    replace_token(str, tokit, tokitlen, &newtok, repl);
+    replace_token(str, tokit, &newtok, repl);
 }
 
 static void
@@ -119,67 +121,80 @@ void jetpl_render(JeTpl * self, JeTplObject * obj, JeTplString * output) {
     
     size_t index;
     JeTplToken * begin = 0;
+    bool inverse = false;
     
     for (index = 0; index < self->toks_len; ++index) {
     	JeTplToken * tok = tokit + index;
     	
-        if (!jetpl_str_is_null(&tok->varname))
+        if (!jetpl_str_is_null(&tok->varname)) {
             jetpl_str_strip(&tok->varname);
+            if  (tok->type & JETPL_TOK_VAR) {
+                JeTplString rendered = {0};
 
-    	if  ((tok->type & JETPL_TOK_VAR) == JETPL_TOK_VAR) {
-    	    JeTplString rendered = {0};
+                const JeTplObjectProp * prop = jetpl_obj_find_property(obj, tok->varname.data);
 
-			const JeTplObjectProp * prop = jetpl_obj_find_property(obj, tok->varname.data);
-			
-			if (prop) {
-				jetpl_obj_render_property(obj, prop, NULL, 0, &rendered);
+                if (prop) {
+                    jetpl_obj_render_property(obj, prop, false, NULL, 0, &rendered);
 
-				if (tok->type != JETPL_TOK_UNESC) html_encode(&rendered);
+                    if (tok->type != JETPL_TOK_UNESC) html_encode(&rendered);
 
-				replace_token(output, tokit, self->toks_len, tok, &rendered);
-				jetpl_str_free(&rendered);
+                    replace_token(output, tokit, tok, &rendered);
+                    jetpl_str_free(&rendered);
 
-			} else if (jetpl_render_property_not_found_delegate) {
-            	jetpl_render_property_not_found_delegate(tok->varname.data, &rendered);
- 				replace_token(output, tokit, self->toks_len, tok, &rendered);
-				jetpl_str_free(&rendered);
-			}
-    		
-        } else if (tok->type == JETPL_TOK_BEGIN) {
-    		begin = tok;
-        } else if (tok->type == JETPL_TOK_END && begin) {
-            JeTplString rendered = {0};
+                } else if (jetpl_render_property_not_found_delegate) {
+                    jetpl_render_property_not_found_delegate(tok->varname.data, &rendered);
+                    replace_token(output, tokit, tok, &rendered);
+                    jetpl_str_free(&rendered);
+                }
 
-            char * arg = malloc(tok->begin - begin->end + 1);
-    		*arg = 0;
-            strncat(arg, output->data + begin->end, tok->begin - begin->end);
+            } else if (tok->type & JETPL_TOK_BEGIN) {
+                begin = tok;
+                if (tok->type == JETPL_TOK_INVERSE) inverse = true;
 
-            const JeTplObjectProp * prop = jetpl_obj_find_property(obj, tok->varname.data);
+            } else if (tok->type == JETPL_TOK_END && begin) {
+                JeTplString rendered = {0};
 
-            if (prop) {
-                jetpl_obj_render_property(obj, prop, arg, tok->begin - begin->end, &rendered);
+                char * arg = malloc(tok->begin - begin->end + 1);
+                *arg = 0;
+                strncat(arg, output->data + begin->end, tok->begin - begin->end);
 
-				replace_tokens(output, tokit, self->toks_len, begin, tok, &rendered);
+                const JeTplObjectProp * prop = jetpl_obj_find_property(obj, tok->varname.data);
 
-				jetpl_str_free(&rendered);
-            } else if (jetpl_render_property_not_found_delegate) {
-            	jetpl_render_property_not_found_delegate(tok->varname.data, &rendered);
-				replace_tokens(output, tokit, self->toks_len, begin, tok, &rendered);
-				jetpl_str_free(&rendered);
+                if (prop) {
+                    jetpl_obj_render_property(obj, prop, inverse, arg, tok->begin - begin->end, &rendered);
+
+                    replace_tokens(output, tokit, begin, tok, &rendered);
+
+                    jetpl_str_free(&rendered);
+                } else if (jetpl_render_property_not_found_delegate) {
+                    jetpl_render_property_not_found_delegate(tok->varname.data, &rendered);
+                    replace_tokens(output, tokit, begin, tok, &rendered);
+                    jetpl_str_free(&rendered);
+                }
+
+                free(arg);
+
+                inverse = false;
+
+            } else if (tok->type == JETPL_TOK_COMMENT) {
+                replace_token(output, tokit, tok, &nullstr);
+            } else if (tok->type == JETPL_TOK_PARTIAL && jetpl_output_partial_delegate) {
+                JeTplString partial = {0};
+                JeTplString rendered = {0};
+                JeTpl * tpl;
+
+                jetpl_output_partial_delegate(tok->varname.data, &partial);
+
+                tpl = jetpl_new(&partial);
+                jetpl_render(tpl, obj, &rendered);
+
+                replace_token(output, tokit, tok, &rendered);
+
+                jetpl_str_free(&rendered);
+                jetpl_str_free(&partial);
+                jetpl_free(tpl);
             }
-
-            free(arg);
-
-    	} else if (tok->type == JETPL_TOK_COMMENT) {
-            replace_token(output, tokit, self->toks_len, tok, &nullstr);
-    	} else if (tok->type == JETPL_TOK_PARTIAL && jetpl_render_partial_delegate) {
-    		JeTplString rendered = {0};
-
-    		jetpl_render_partial_delegate(tok->varname.data, &rendered);
-    		replace_token(output, tokit, self->toks_len, tok, &rendered);
-
-			jetpl_str_free(&rendered);
-    	}
+        }
     }
 
     free(tokit);

@@ -8,7 +8,7 @@
 
 typedef struct _JeTplObject JeTplObject;
 
-typedef void (JeTplExtendedDel)(JeTplObject *, int, char *, size_t, JeTplString *);
+typedef void (JeTplExtendedDel)(JeTplObject *, int, bool, char *, size_t, JeTplString *);
 
 typedef struct _JeTplObjectProp {
 	unsigned int id;
@@ -27,6 +27,6 @@ struct _JeTplObject {
 
 const JeTplObjectProp * jetpl_obj_find_property (JeTplObject * self, const char *prop_name);
 
-void jetpl_obj_render_property (JeTplObject * self, const JeTplObjectProp *prop, char * arg, size_t arglen, JeTplString *val);
+void jetpl_obj_render_property (JeTplObject * self, const JeTplObjectProp *prop, bool inverse, char * arg, size_t arglen, JeTplString *val);
 
 #endif // JETPLOBJECT_H

@@ -1,3 +1,4 @@
+#define __STDC_WANT_LIB_EXT1__
 #include "jetpl-object.h"
 
 #include <assert.h>
@@ -12,7 +13,7 @@ const JeTplObjectProp * jetpl_obj_find_property(JeTplObject * self, const char *
 	return NULL;
 }
 
-void jetpl_obj_render_property(JeTplObject * self, const JeTplObjectProp * prop, char * arg, size_t arglen, JeTplString * val) {
+void jetpl_obj_render_property(JeTplObject * self, const JeTplObjectProp * prop, bool inverse, char * arg, size_t arglen, JeTplString * val) {
 	assert (self && self->clazz && self->clazz->render_property_delegate && prop);
-	self->clazz->render_property_delegate(self, prop->id, arg, arglen, val);
+	self->clazz->render_property_delegate(self, prop->id, inverse, arg, arglen, val);
 }

@@ -8,6 +8,8 @@ enum TypicalProperties {
 	TYPICAL_VALUE,
 	TYPICAL_IN_CA,
 	TYPICAL_TAXED_VALUE,
+	TYPICAL_VERBATIM,
+	TYPICAL_NONE,
 	N_PROPS
 };
 
@@ -22,10 +24,12 @@ const JeTplObjectProp properties[] = {
 	{TYPICAL_NAME, "name"},
 	{TYPICAL_VALUE, "value"},
 	{TYPICAL_IN_CA, "in_ca"},
-	{TYPICAL_TAXED_VALUE, "taxed_value"}
+	{TYPICAL_TAXED_VALUE, "taxed_value"},
+	{TYPICAL_VERBATIM, "verbatim"},
+	{TYPICAL_NONE, "none"}
 };
 
-static void typical_render_property_delegate(JeTplObject *obj, int prop_id, char *arg, size_t arglen, JeTplString *out) {
+static void typical_render_property_delegate(JeTplObject *obj, int prop_id, bool inverse, char *arg, size_t arglen, JeTplString *out) {
 	Typical * self = (Typical *) obj;
 
 	switch (prop_id) {
@@ -49,6 +53,13 @@ static void typical_render_property_delegate(JeTplObject *obj, int prop_id, char
 		case TYPICAL_TAXED_VALUE:
 			jetpl_str_init_f(out, "%.0f", self->value*0.6);
 			break;
+
+		case TYPICAL_VERBATIM:
+			jetpl_str_init(out, arg, arglen);
+			break;
+
+		case TYPICAL_NONE:
+            if (inverse) jetpl_str_init(out, arg, arglen);
 	}
 }
 

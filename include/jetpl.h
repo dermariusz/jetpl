@@ -15,7 +15,7 @@ typedef void (JeTplSimpleDel)(const char *, JeTplString *);
  * However, these variablea are only meant to be changed during application initializiation,
  * so in that particular case it should be okay for the variables to be global.
  */
-extern JeTplSimpleDel * jetpl_render_partial_delegate;
+extern JeTplSimpleDel * jetpl_output_partial_delegate;
 extern JeTplSimpleDel * jetpl_render_property_not_found_delegate;
 
 JeTpl * jetpl_new(JeTplString * view);

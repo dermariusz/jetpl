@@ -58,9 +58,14 @@ void jetpl_str_copy (JeTplString * dest, JeTplString * src) {
 
 int jetpl_str_cmp(JeTplString * str1, JeTplString * str2) {
     size_t i;
-	for (i = 0; i < str1->len && i < str2->len; ++i) {
+    if (str2->len == 0 && str1->len > 0) return 1;
+    if (str1->len == 0 && str2->len > 0) return -1;
+    for (i = 0; ; ++i) {
 		if (str1->data[i] != str2->data[i])
             return str1->data[i] < str2->data[i] ? -1 : 1;
+
+        if (i == str1->len)
+            return 0;
     }
     return 0;
 }

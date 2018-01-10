@@ -11,11 +11,15 @@ int main () {
 
     jetpl_str_init_sz(&expected, "Hello &lt;Chris&gt;<Chris>\n"
                                  "You have just won 10000 dollars!\n"
-                                 "Well, 6000 dollars, after taxes.\n");
+                                 "Well, 6000 dollars, after taxes.\n"
+                                 "xxx\n"
+                                 "{{#hello_world}}{{/hello_world}}\n");
 
-    jetpl_str_init_sz(&view, "Hello {{name}}{{{name}}}\n"
+    jetpl_str_init_sz(&view, "Hello {{name}}{{&name}}\n"
                              "You have just won {{value}} dollars!\n"
-                             "{{#in_ca}}Well, {{taxed_value}} dollars, after taxes.\n{{/in_ca}}{{! no comments }}");
+                             "{{#in_ca}}Well, {{taxed_value}} dollars, after taxes.\n{{/in_ca}}"
+                             "{{#none}}yyy\n{{/none}}{{^none}}xxx\n{{/none}}"
+                             "{{#verbatim}}{{#hello_world}}{{/hello_world}}\n{{/verbatim}}");
 
 	JeTpl *tpl = jetpl_new(&view);
     JeTplObject *obj =  (JeTplObject *) typical_new("<Chris>", 10000, true);
