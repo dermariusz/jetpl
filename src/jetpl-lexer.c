@@ -53,10 +53,6 @@ void jetpl_lex_next(JeTplLexer *self, JeTplToken *tok) {
                     eot += 2;
                     break;
                 }
-                else if (strncmp("{{", self->view->data + eot, 2) == 0) {
-                	// There is no valid reason to allow opening braces inside varname.
-                	goto treat_current_token_as_text;
-                }
             }
             if (jetpl_str_is_null(&varname))
             	goto treat_current_token_as_text; // There is no way this could be a valid token.
