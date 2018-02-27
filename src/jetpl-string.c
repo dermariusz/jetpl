@@ -7,10 +7,10 @@
 
 void jetpl_str_init (JeTplString * self, const char * data, size_t len) {
 	assert(self);
-	
-    if (data && len) {
+
+	if (data && len) {
 		self->len = len;
-        self->data = malloc(len + 1);
+		self->data = malloc(len + 1);
 		self->capacity = len + 1;
 		self->data[0] = 0;
 		strncat(self->data, data, len);
@@ -37,7 +37,7 @@ void jetpl_str_init_f (JeTplString * self, const char * format, ...) {
 		va_start(arglist, format);
 		vsnprintf(self->data, needed + 1, format, arglist);
 		va_end(arglist);
-		
+
 		self->capacity = needed + 1;
 	}
 }
@@ -48,67 +48,67 @@ void jetpl_str_copy (JeTplString * dest, JeTplString * src) {
 	dest->len = src->len;
 	dest->capacity = src->capacity;
 
-    if (dest->len > dest->capacity) {
-        dest->capacity += dest->len;
-    }
+	if (dest->len > dest->capacity) {
+		dest->capacity += dest->len;
+	}
 
 	dest->data = malloc(dest->capacity);
 	memcpy(dest->data, src->data, src->len);
 }
 
 int jetpl_str_cmp(JeTplString * str1, JeTplString * str2) {
-    size_t i;
-    if (str2->len == 0 && str1->len > 0) return 1;
-    if (str1->len == 0 && str2->len > 0) return -1;
-    for (i = 0; ; ++i) {
+	size_t i;
+	if (str2->len == 0 && str1->len > 0) return 1;
+	if (str1->len == 0 && str2->len > 0) return -1;
+	for (i = 0; ; ++i) {
 		if (str1->data[i] != str2->data[i])
-            return str1->data[i] < str2->data[i] ? -1 : 1;
+			return str1->data[i] < str2->data[i] ? -1 : 1;
 
-        if (i == str1->len)
-            return 0;
-    }
-    return 0;
+		if (i == str1->len)
+			return 0;
+	}
+	return 0;
 }
 
 void jetpl_str_strip (JeTplString * self) {
-    assert(self);
+	assert(self);
 
 	size_t newbegin, newend;
-	
-    for (newbegin = 0; newbegin < self->len; ++newbegin)
-        if (self->data[newbegin] != ' ')
+
+	for (newbegin = 0; newbegin < self->len; ++newbegin)
+		if (self->data[newbegin] != ' ')
 			break;
 
-    if (newbegin != 0) {
-        memmove(self->data, self->data + newbegin, self->len - newbegin);
-        self->len -= newbegin;
-    }
+	if (newbegin != 0) {
+		memmove(self->data, self->data + newbegin, self->len - newbegin);
+		self->len -= newbegin;
+	}
 
-    for (newend = self->len; newend > 0; --newend)
-        if (self->data[newend] != ' ')
+	for (newend = self->len; newend > 0; --newend)
+		if (self->data[newend] != ' ')
 			break;
 
-    if (newend != self->len) {
-        self->len = newend + 1;
-        self->data[self->len] = 0;
-    }
+	if (newend != self->len) {
+		self->len = newend + 1;
+		self->data[self->len] = 0;
+	}
 }
 
 void jetpl_str_replace(JeTplString * self, size_t begin, size_t end, JeTplString * str) {
-    assert(begin < end && self && str);
+	assert(begin < end && self && str);
 
-    size_t length = end - begin;
-    if (self->len - length + str->len >= self->capacity) {
-        self->capacity *= 2;
-        self->capacity += str->len;
-    }
-    
-    char * concat = malloc(self->capacity);
-    
-    memcpy(concat, self->data, begin);
-    memcpy(concat + begin, str->data, str->len);
-    memcpy(concat + begin + str->len, self->data + end, self->len - end);
-    concat[begin + str->len + self->len - end] = 0;
+	size_t length = end - begin;
+	if (self->len - length + str->len >= self->capacity) {
+		self->capacity *= 2;
+		self->capacity += str->len;
+	}
+
+	char * concat = malloc(self->capacity);
+
+	memcpy(concat, self->data, begin);
+	memcpy(concat + begin, str->data, str->len);
+	memcpy(concat + begin + str->len, self->data + end, self->len - end);
+	concat[begin + str->len + self->len - end] = 0;
 
 	jetpl_str_free(self);
 
